@@ -27,5 +27,5 @@ export interface Schema {
   skipDefaultProject?: boolean;
   standalone?: boolean;
   rootProject?: boolean;
-  skipNxWelcomeComponent?: boolean;
+  skipStarterTemplate?: boolean;
 }

@@ -1,7 +1,7 @@
 <% if (classComponent) { %>
 import { Component } from 'react';
 <% } %>
-<% if (includeNxWelcomeComponent) { %>
+<% if (includeNxStarterTemplate) { %>
 import NxWelcome from "./nx-welcome";
 <% } %>
 
@@ -14,7 +14,7 @@ export function App() {
   return (
     <>
       <style jsx>{`/** your style here **/`}</style>
-      <% if (includeNxWelcomeComponent) { %>
+      <% if (includeNxStarterTemplate) { %>
       <NxWelcome title="<%= projectName %>"/>
       <% } %>
     </>

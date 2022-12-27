@@ -62,7 +62,7 @@ export function normalizeOptions<T extends Schema = Schema>(
     fileName,
     styledModule,
     hasStyles: options.style !== 'none',
-    includeNxWelcomeComponent: !options.skipNxWelcomeComponent,
+    includeNxStarterTemplate: !options.skipStarterTemplate,
   } as NormalizedSchema;
 
   normalized.routing = normalized.routing ?? false;

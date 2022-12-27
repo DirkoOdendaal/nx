@@ -32,7 +32,7 @@ export interface Schema {
   rootProject?: boolean;
   bundler?: 'webpack' | 'vite';
   minimal?: boolean;
-  skipNxWelcomeComponent?: boolean;
+  skipStarterTemplate?: boolean;
 }
 
 export interface NormalizedSchema<T extends Schema = Schema> extends T {
@@ -44,5 +44,5 @@ export interface NormalizedSchema<T extends Schema = Schema> extends T {
   styledModule: null | SupportedStyles;
   hasStyles: boolean;
   unitTestRunner: 'jest' | 'vitest' | 'none';
-  includeNxWelcomeComponent: boolean;
+  includeNxStarterTemplate: boolean;
 }

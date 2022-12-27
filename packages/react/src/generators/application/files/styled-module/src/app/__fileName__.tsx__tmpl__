@@ -2,7 +2,7 @@
 import { Component } from 'react';
 <% } %>
 import styled from '<%= styledModule %>';
-<% if (includeNxWelcomeComponent) { %>
+<% if (includeNxStarterTemplate) { %>
 import NxWelcome from "./nx-welcome";
 <% } %>
 
@@ -18,7 +18,7 @@ export function App() {
 <% } %>
   return (
       <StyledApp>
-        <% if (includeNxWelcomeComponent) { %>
+        <% if (includeNxStarterTemplate) { %>
         <NxWelcome title="<%= projectName %>"/>
         <% } %>
       </StyledApp>
