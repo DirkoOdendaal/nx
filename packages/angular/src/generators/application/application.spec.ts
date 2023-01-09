@@ -5,8 +5,8 @@ import {
   NxJsonConfiguration,
   parseJson,
   readJson,
+  readNxJson,
   readProjectConfiguration,
-  readWorkspaceConfiguration,
   updateJson,
 } from '@nrwl/devkit';
 import {
@@ -22,6 +22,7 @@ import {
 } from '../../utils/versions';
 import { applicationGenerator } from './application';
 import type { Schema } from './schema';
+
 // need to mock cypress otherwise it'll use the nx installed version from package.json
 //  which is v9 while we are testing for the new v10 version
 jest.mock('@nrwl/cypress/src/utils/cypress-version');
@@ -220,36 +221,18 @@ describe('app', () => {
       expect(appTsConfig.extends).toBe('../../tsconfig.json');
     });
 
-    it('should set default project', async () => {
-      // ACT
-      await generateApp(appTree);
-
-      // ASSERT
-      const { defaultProject } = readWorkspaceConfiguration(appTree);
-      expect(defaultProject).toBe('my-app');
-    });
-
     it('should not overwrite default project if already set', async () => {
       // ARRANGE
-      const workspace = readWorkspaceConfiguration(appTree);
-      workspace.defaultProject = 'some-awesome-project';
-      devkit.updateWorkspaceConfiguration(appTree, workspace);
+      const nxJson = readNxJson(appTree);
+      nxJson.defaultProject = 'some-awesome-project';
+      devkit.updateNxJson(appTree, nxJson);
 
       // ACT
       await generateApp(appTree);
 
       // ASSERT
-      const { defaultProject } = readWorkspaceConfiguration(appTree);
+      const { defaultProject } = readNxJson(appTree);
       expect(defaultProject).toBe('some-awesome-project');
-    });
-
-    it('should not set default project when "--skip-default-project=true"', async () => {
-      // ACT
-      await generateApp(appTree, 'my-app', { skipDefaultProject: true });
-
-      // ASSERT
-      const { defaultProject } = readWorkspaceConfiguration(appTree);
-      expect(defaultProject).toBeUndefined();
     });
   });
 

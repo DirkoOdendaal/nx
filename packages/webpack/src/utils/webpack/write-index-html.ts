@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { interpolateEnvironmentVariablesToIndex } from './interpolate-env-variables-to-index';
 import { generateEntryPoints } from './package-chunk-sort';
 import { createHash } from 'crypto';
-import { RawSource, ReplaceSource } from 'webpack-sources';
+import * as webpack from 'webpack';
 
 import type { EmittedFile, ExtraEntryPoint } from '../models';
 
@@ -59,13 +59,7 @@ export interface FileInfo {
  * bundles for differential serving.
  */
 export function augmentIndexHtml(params: AugmentIndexHtmlOptions): string {
-  const {
-    loadOutputFile,
-    files,
-    noModuleFiles = [],
-    moduleFiles = [],
-    entrypoints,
-  } = params;
+  const { loadOutputFile, files, moduleFiles = [], entrypoints } = params;
 
   let { crossOrigin = 'none' } = params;
   if (params.sri && crossOrigin === 'none') {
@@ -76,7 +70,7 @@ export function augmentIndexHtml(params: AugmentIndexHtmlOptions): string {
   const scripts = new Set<string>();
 
   // Sort files in the order we want to insert them by entrypoint and dedupes duplicates
-  const mergedFiles = [...moduleFiles, ...noModuleFiles, ...files];
+  const mergedFiles = [...moduleFiles, ...files];
   for (const entrypoint of entrypoints) {
     for (const { extension, file, name } of mergedFiles) {
       if (name !== entrypoint) {
@@ -138,8 +132,8 @@ export function augmentIndexHtml(params: AugmentIndexHtmlOptions): string {
   }
 
   // Inject into the html
-  const indexSource = new ReplaceSource(
-    new RawSource(params.inputContent),
+  const indexSource = new webpack.sources.ReplaceSource(
+    new webpack.sources.RawSource(params.inputContent),
     params.input
   );
 
@@ -160,15 +154,9 @@ export function augmentIndexHtml(params: AugmentIndexHtmlOptions): string {
       // in some cases for differential loading file with the same name is avialable in both
       // nomodule and module such as scripts.js
       // we shall not add these attributes if that's the case
-      const isNoModuleType = noModuleFiles.some(scriptPredictor);
       const isModuleType = moduleFiles.some(scriptPredictor);
 
-      if (isNoModuleType && !isModuleType) {
-        attrs.push({ name: 'nomodule', value: null });
-        if (!script.startsWith('polyfills-nomodule-es5')) {
-          attrs.push({ name: 'defer', value: null });
-        }
-      } else if (isModuleType) {
+      if (isModuleType) {
         attrs.push({ name: 'type', value: 'module' });
       } else {
         attrs.push({ name: 'defer', value: null });
@@ -260,7 +248,7 @@ export function augmentIndexHtml(params: AugmentIndexHtmlOptions): string {
     parse5.serialize(styleElements, { treeAdapter })
   );
 
-  return indexSource.source();
+  return indexSource.source().toString();
 }
 
 function _generateSriAttributes(content: string) {
@@ -293,7 +281,6 @@ export async function writeIndexHtml({
   outputPath,
   indexPath,
   files = [],
-  noModuleFiles = [],
   moduleFiles = [],
   baseHref,
   deployUrl,
@@ -314,7 +301,6 @@ export async function writeIndexHtml({
     sri,
     entrypoints: generateEntryPoints({ scripts, styles }),
     files: filterAndMapBuildFiles(files, ['.js', '.css']),
-    noModuleFiles: filterAndMapBuildFiles(noModuleFiles, '.js'),
     moduleFiles: filterAndMapBuildFiles(moduleFiles, '.js'),
     loadOutputFile: (filePath) =>
       readFileSync(join(dirname(outputPath), filePath)).toString(),

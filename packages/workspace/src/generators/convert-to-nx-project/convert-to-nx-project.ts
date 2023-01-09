@@ -1,6 +1,3 @@
-import { dirname } from 'path';
-import { prompt } from 'enquirer';
-
 import {
   convertNxGenerator,
   formatFiles,
@@ -10,12 +7,13 @@ import {
   normalizePath,
   ProjectConfiguration,
   readProjectConfiguration,
-  readWorkspaceConfiguration,
   Tree,
   updateJson,
   writeJson,
 } from '@nrwl/devkit';
-
+import { prompt } from 'enquirer';
+import { getRelativeProjectJsonSchemaPath } from 'nx/src/generators/utils/project-configuration';
+import { dirname } from 'path';
 import { Schema } from './schema';
 import { getProjectConfigurationPath } from './utils/get-project-configuration-path';
 
@@ -41,17 +39,6 @@ export async function validateSchema(schema: Schema) {
 }
 
 export async function convertToNxProjectGenerator(host: Tree, schema: Schema) {
-  const workspace = readWorkspaceConfiguration(host);
-  if (workspace.version < 2) {
-    logger.error(`
-NX Only workspaces with version 2+ support project.json files.
-To upgrade change the version number at the top of ${getWorkspacePath(
-      host
-    )} and run 'nx format'.
-`);
-    throw new Error('v2+ Required');
-  }
-
   await validateSchema(schema);
 
   const projects = schema.all
@@ -68,9 +55,11 @@ To upgrade change the version number at the top of ${getWorkspacePath(
       continue;
     }
 
-    delete configuration.root;
-
-    writeJson(host, configPath, configuration);
+    writeJson(host, configPath, {
+      $schema: getRelativeProjectJsonSchemaPath(host, configuration),
+      ...configuration,
+      root: undefined,
+    });
 
     updateJson(host, getWorkspacePath(host), (value) => {
       value.projects[project] = normalizePath(dirname(configPath));

@@ -2,10 +2,10 @@ import {
   addDependenciesToPackageJson,
   convertNxGenerator,
   readJson,
-  readWorkspaceConfiguration,
+  readNxJson,
   Tree,
   updateJson,
-  updateWorkspaceConfiguration,
+  updateNxJson,
 } from '@nrwl/devkit';
 import { isFramework } from '../../utils/utilities';
 
@@ -13,6 +13,7 @@ import {
   babelCoreVersion,
   babelLoaderVersion,
   babelPresetTypescriptVersion,
+  htmlWebpackPluginVersion,
   litHtmlVersion,
   nxVersion,
   reactNativeStorybookLoader,
@@ -20,9 +21,8 @@ import {
   storybookVersion,
   svgrVersion,
   urlLoaderVersion,
-  viteBuilderVeresion,
+  viteBuilderVersion,
   webpack5Version,
-  htmlWebpackPluginVersion,
 } from '../../utils/versions';
 import { Schema } from './schema';
 
@@ -40,7 +40,7 @@ function checkDependenciesInstalled(host: Tree, schema: Schema) {
   devDependencies['@storybook/addon-essentials'] = storybookVersion;
 
   if (schema.bundler === 'vite') {
-    devDependencies['@storybook/builder-vite'] = viteBuilderVeresion;
+    devDependencies['@storybook/builder-vite'] = viteBuilderVersion;
   } else {
     devDependencies['@storybook/builder-webpack5'] = storybookVersion;
     devDependencies['@storybook/manager-webpack5'] = storybookVersion;
@@ -110,33 +110,32 @@ function checkDependenciesInstalled(host: Tree, schema: Schema) {
 }
 
 function addCacheableOperation(tree: Tree) {
-  const workspace = readWorkspaceConfiguration(tree);
+  const nxJson = readNxJson(tree);
   if (
-    !workspace.tasksRunnerOptions ||
-    !workspace.tasksRunnerOptions.default ||
-    (workspace.tasksRunnerOptions.default.runner !==
+    !nxJson.tasksRunnerOptions ||
+    !nxJson.tasksRunnerOptions.default ||
+    (nxJson.tasksRunnerOptions.default.runner !==
       '@nrwl/workspace/tasks-runners/default' &&
-      workspace.tasksRunnerOptions.default.runner !==
-        'nx/tasks-runners/default')
+      nxJson.tasksRunnerOptions.default.runner !== 'nx/tasks-runners/default')
   ) {
     return;
   }
 
-  workspace.tasksRunnerOptions.default.options =
-    workspace.tasksRunnerOptions.default.options || {};
+  nxJson.tasksRunnerOptions.default.options =
+    nxJson.tasksRunnerOptions.default.options || {};
 
-  workspace.tasksRunnerOptions.default.options.cacheableOperations =
-    workspace.tasksRunnerOptions.default.options.cacheableOperations || [];
+  nxJson.tasksRunnerOptions.default.options.cacheableOperations =
+    nxJson.tasksRunnerOptions.default.options.cacheableOperations || [];
   if (
-    !workspace.tasksRunnerOptions.default.options.cacheableOperations?.includes(
+    !nxJson.tasksRunnerOptions.default.options.cacheableOperations?.includes(
       'build-storybook'
     )
   ) {
-    workspace.tasksRunnerOptions.default.options.cacheableOperations.push(
+    nxJson.tasksRunnerOptions.default.options.cacheableOperations.push(
       'build-storybook'
     );
   }
-  updateWorkspaceConfiguration(tree, workspace);
+  updateNxJson(tree, nxJson);
 }
 
 function moveToDevDependencies(tree: Tree) {

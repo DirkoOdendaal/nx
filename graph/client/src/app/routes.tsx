@@ -1,7 +1,7 @@
 import { Shell } from './shell';
 import { redirect, RouteObject } from 'react-router-dom';
-import ProjectsSidebar from './feature-projects/projects-sidebar';
-import TasksSidebar from './feature-tasks/tasks-sidebar';
+import { ProjectsSidebar } from './feature-projects/projects-sidebar';
+import { TasksSidebar } from './feature-tasks/tasks-sidebar';
 import { getEnvironmentConfig } from './hooks/use-environment-config';
 // nx-ignore-next-line
 import { ProjectGraphClientResponse } from 'nx/src/command-line/dep-graph';
@@ -102,6 +102,12 @@ const childRoutes: RouteObject[] = [
       {
         path: ':selectedTarget',
         element: <TasksSidebar />,
+        children: [
+          {
+            path: 'all',
+            element: <TasksSidebar />,
+          },
+        ],
       },
     ],
   },

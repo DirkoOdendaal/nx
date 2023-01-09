@@ -5,7 +5,7 @@ import { To, useParams, useSearchParams } from 'react-router-dom';
 
 export const useRouteConstructor = (): ((
   to: To,
-  retainSearchParams: true
+  retainSearchParams: boolean
 ) => To) => {
   const { environment } = getEnvironmentConfig();
   const { selectedWorkspaceId } = useParams();
@@ -101,7 +101,7 @@ export function groupProjectsByDirectory(
         ? workspaceLayout.appsDir
         : workspaceLayout.libsDir;
     const directories = parseParentDirectoriesFromFilePath(
-      project.data.root,
+      (project.data as any).root,
       workspaceRoot
     );
 

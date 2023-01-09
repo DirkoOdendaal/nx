@@ -24,7 +24,7 @@ export const ParameterView = (props: {
         {props.alias && (
           <span
             data-tooltip="Property alias"
-            className="relative -top-0.5 inline-flex rounded-md px-2 text-xs font-semibold uppercase leading-5 dark:bg-slate-700"
+            className="relative -top-0.5 inline-flex rounded-md px-2 text-xs font-semibold leading-5 dark:bg-slate-700"
           >
             {props.alias}
           </span>
@@ -60,19 +60,24 @@ export const ParameterView = (props: {
       )}
     </div>
 
-    <div className="prose prose-slate dark:prose-invert">
-      {renderMarkdown(props.description, {
-        filePath: '',
-      })}
+    <div className="prose prose-slate dark:prose-invert max-w-none">
+      {
+        renderMarkdown(props.description, {
+          filePath: '',
+        }).node
+      }
     </div>
 
-    {props.deprecated && !!props.schema['x-deprecated'] && (
+    {props.deprecated &&
+    typeof (props.schema as any)['x-deprecated'] === 'string' ? (
       <div className="prose prose-slate dark:prose-invert mt-2 rounded-md bg-red-100 px-4 text-red-800 dark:bg-red-800 dark:text-red-100">
-        {renderMarkdown((props.schema as any)['x-deprecated'].toString(), {
-          filePath: '',
-        })}
+        {
+          renderMarkdown(String((props.schema as any)['x-deprecated']), {
+            filePath: '',
+          }).node
+        }
       </div>
-    )}
+    ) : null}
   </div>
 );
 

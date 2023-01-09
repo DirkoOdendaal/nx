@@ -10,6 +10,13 @@ Looking for a React monorepo setup? Check our [React monorepo tutorial](/react-t
 
 {% /callout %}
 
+{% youtube
+src="https://www.youtube.com/embed/Q1WxHhmd7BU"
+title="Tutorial: React Standalone Application"
+width="100%" /%}
+
+{% github-repository url="https://github.com/nrwl/nx-recipes/tree/main/react-standalone-application" /%}
+
 # React Standalone Tutorial - Part 1: Code Generation
 
 ## Contents
@@ -32,7 +39,7 @@ Run the command `npx create-nx-workspace@latest` and when prompted, provide the 
 ✔ Repository name                       · store
 ✔ Application name                      · store
 ✔ Default stylesheet format             · css
-✔ Enable distributed caching to make your CI faster · No
+✔ Enable distributed caching to make your CI faster · Yes
 ```
 
 {% card title="Opting into Nx Cloud" description="You will also be prompted whether to add Nx Cloud to your workspace. We won't address this in this tutorial, but you can see the introduction to Nx Cloud for more details." url="/nx-cloud/intro/what-is-nx-cloud" /%}

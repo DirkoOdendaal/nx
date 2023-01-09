@@ -6,7 +6,7 @@ jest.mock('nx/src/utils/workspace-root', () => ({
 }));
 import { buildProjectGraph } from './build-project-graph';
 import { defaultFileHasher } from '../hasher/file-hasher';
-import { WorkspaceJsonConfiguration } from '../config/workspace-json-project-json';
+import { ProjectsConfigurations } from '../config/workspace-json-project-json';
 import { NxJsonConfiguration } from '../config/nx-json';
 import { stripIndents } from '../utils/strip-indents';
 import { DependencyType } from '../config/project-graph';
@@ -14,7 +14,7 @@ import { DependencyType } from '../config/project-graph';
 describe('project graph', () => {
   let packageJson: any;
   let packageLockJson: any;
-  let workspaceJson: WorkspaceJsonConfiguration;
+  let projects: ProjectsConfigurations;
   let nxJson: NxJsonConfiguration;
   let tsConfigJson: any;
   let filesJson: any;
@@ -82,7 +82,7 @@ describe('project graph', () => {
         },
       },
     };
-    workspaceJson = {
+    projects = {
       version: 2,
       projects: {
         demo: {
@@ -179,7 +179,7 @@ describe('project graph', () => {
       './package.json': JSON.stringify(packageJson),
       './package-lock.json': JSON.stringify(packageLockJson),
       './nx.json': JSON.stringify(nxJson),
-      './workspace.json': JSON.stringify(workspaceJson),
+      './workspace.json': JSON.stringify(projects),
       './tsconfig.base.json': JSON.stringify(tsConfigJson),
     };
     vol.reset();
@@ -264,8 +264,8 @@ describe('project graph', () => {
     expect(graph.nodes).toMatchObject({
       demo: { name: 'demo', type: 'app' },
     });
-    workspaceJson.projects.renamed = workspaceJson.projects.demo;
-    fs.writeFileSync('/root/workspace.json', JSON.stringify(workspaceJson));
+    projects.projects.renamed = projects.projects.demo;
+    fs.writeFileSync('/root/workspace.json', JSON.stringify(projects));
 
     graph = await buildProjectGraph();
     expect(graph.nodes).toMatchObject({

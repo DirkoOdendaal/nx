@@ -21,6 +21,7 @@ import {
   createProjectRootMappingsFromProjectConfigurations,
   findProjectForPath,
 } from '../project-graph/utils/find-project-for-path';
+import { normalizePath } from './path';
 
 export type ProjectTargetConfigurator = (
   file: string
@@ -172,7 +173,7 @@ function registerTSTranspiler() {
 }
 
 function lookupLocalPlugin(importPath: string, root = workspaceRoot) {
-  const workspace = new Workspaces(root).readWorkspaceConfiguration({
+  const workspace = new Workspaces(root).readProjectsConfig({
     _ignorePluginInference: true,
   });
   const plugin = findNxProjectForImportPath(importPath, workspace, root);
@@ -190,16 +191,16 @@ function lookupLocalPlugin(importPath: string, root = workspaceRoot) {
 
 function findNxProjectForImportPath(
   importPath: string,
-  workspace: ProjectsConfigurations,
+  projects: ProjectsConfigurations,
   root = workspaceRoot
 ): string | null {
   const tsConfigPaths: Record<string, string[]> = readTsConfigPaths(root);
   const possiblePaths = tsConfigPaths[importPath]?.map((p) =>
-    path.relative(root, path.join(root, p))
+    normalizePath(path.relative(root, path.join(root, p)))
   );
   if (possiblePaths?.length) {
     const projectRootMappings =
-      createProjectRootMappingsFromProjectConfigurations(workspace.projects);
+      createProjectRootMappingsFromProjectConfigurations(projects.projects);
     for (const tsConfigPath of possiblePaths) {
       const nxProject = findProjectForPath(tsConfigPath, projectRootMappings);
       if (nxProject) {

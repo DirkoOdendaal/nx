@@ -7,6 +7,7 @@ import { examples } from './examples';
 import { workspaceRoot } from '../utils/workspace-root';
 import { getPackageManagerCommand } from '../utils/package-manager';
 import { writeJsonFile } from '../utils/fileutils';
+import { WatchArguments } from './watch';
 
 // Ensure that the output takes up the available width of the terminal.
 yargs.wrap(yargs.terminalWidth());
@@ -381,6 +382,15 @@ export const commandsObject = yargs
       process.exit(0);
     },
   })
+  .command({
+    command: 'watch',
+    describe: 'Watch for changes within projects, and execute commands',
+    builder: (yargs) =>
+      linkToNxDevAndExamples(withWatchOptions(yargs), 'watch'),
+    handler: async (args) => {
+      await import('./watch').then((m) => m.watch(args as WatchArguments));
+    },
+  })
   .help()
   .version(nxVersion);
 
@@ -394,8 +404,8 @@ function withFormatOptions(yargs: yargs.Argv): yargs.Argv {
       type: 'boolean',
     })
     .option('projects', {
-      describe: 'Projects to format (comma delimited)',
-      type: 'array',
+      describe: 'Projects to format (comma/space delimited)',
+      type: 'string',
       coerce: parseCSV,
     })
     .conflicts({
@@ -438,9 +448,9 @@ function withPlainOption(yargs: yargs.Argv): yargs.Argv {
 function withExcludeOption(yargs: yargs.Argv): yargs.Argv {
   return yargs.option('exclude', {
     describe: 'Exclude certain projects from being processed',
-    type: 'array',
+    type: 'string',
     coerce: parseCSV,
-    default: [],
+    default: '',
   });
 }
 
@@ -505,8 +515,8 @@ function withAffectedOptions(yargs: yargs.Argv): yargs.Argv {
     })
     .option('files', {
       describe:
-        'Change the way Nx is calculating the affected command by providing directly changed files, list of files delimited by commas',
-      type: 'array',
+        'Change the way Nx is calculating the affected command by providing directly changed files, list of files delimited by commas or spaces',
+      type: 'string',
       requiresArg: true,
       coerce: parseCSV,
     })
@@ -561,9 +571,11 @@ function withRunManyOptions(yargs: yargs.Argv): yargs.Argv {
       'populate--': true,
     })
     .option('projects', {
-      describe:
-        'Projects to run. (comma delimited project names and/or patterns)',
       type: 'string',
+      alias: 'p',
+      coerce: parseCSV,
+      describe:
+        'Projects to run. (comma/space delimited project names and/or patterns)',
     })
     .option('all', {
       describe: '[deprecated] Run the target on all projects in the workspace',
@@ -587,7 +599,7 @@ function withDepGraphOptions(yargs: yargs.Argv): yargs.Argv {
     .option('exclude', {
       describe:
         'List of projects delimited by commas to exclude from the project graph.',
-      type: 'array',
+      type: 'string',
       coerce: parseCSV,
     })
 
@@ -639,10 +651,12 @@ function withTargetAndConfigurationOption(
   yargs: yargs.Argv,
   demandOption = true
 ): yargs.Argv {
-  return withConfiguration(yargs).option('target', {
-    describe: 'Task to run for affected projects',
+  return withConfiguration(yargs).option('targets', {
+    describe: 'Tasks to run for affected projects',
     type: 'string',
+    alias: ['target', 't'],
     requiresArg: true,
+    coerce: parseCSV,
     demandOption,
     global: false,
   });
@@ -927,15 +941,66 @@ function withMigrationOptions(yargs: yargs.Argv) {
     });
 }
 
-function parseCSV(args: string[]) {
+function withWatchOptions(yargs: yargs.Argv) {
+  return yargs
+    .parserConfiguration({
+      'strip-dashed': true,
+      'populate--': true,
+    })
+    .option('projects', {
+      type: 'string',
+      alias: 'p',
+      coerce: parseCSV,
+      description: 'Projects to watch (comma/space delimited).',
+    })
+    .option('all', {
+      type: 'boolean',
+      description: 'Watch all projects.',
+    })
+    .option('includeDependentProjects', {
+      type: 'boolean',
+      description:
+        'When watching selected projects, include dependent projects as well.',
+      alias: 'd',
+    })
+    .option('includeGlobalWorkspaceFiles', {
+      type: 'boolean',
+      description:
+        'Include global workspace files that are not part of a project. For example, the root eslint, or tsconfig file.',
+      alias: 'g',
+      hidden: true,
+    })
+    .option('command', { type: 'string', hidden: true })
+    .option('verbose', {
+      type: 'boolean',
+      description:
+        'Run watch mode in verbose mode, where commands are logged before execution.',
+    })
+    .conflicts({
+      all: 'projects',
+    })
+    .check((args) => {
+      if (!args.all && !args.projects) {
+        throw Error('Please specify either --all or --projects');
+      }
+
+      return true;
+    })
+    .middleware((args) => {
+      const { '--': doubledash } = args;
+      if (doubledash && Array.isArray(doubledash)) {
+        args.command = (doubledash as string[]).join(' ');
+      } else {
+        throw Error('No command specified for watch mode.');
+      }
+    }, true);
+}
+
+function parseCSV(args: string) {
   if (!args) {
     return args;
   }
-  return args
-    .map((arg) => arg.split(','))
-    .reduce((acc, value) => {
-      return [...acc, ...value];
-    }, [] as string[]);
+  return args.split(',');
 }
 
 function linkToNxDevAndExamples(yargs: yargs.Argv, command: string) {

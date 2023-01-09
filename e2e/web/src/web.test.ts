@@ -34,7 +34,6 @@ describe('Web Components Applications', () => {
     checkFilesExist(
       `dist/apps/${appName}/index.html`,
       `dist/apps/${appName}/runtime.js`,
-      `dist/apps/${appName}/polyfills.js`,
       `dist/apps/${appName}/main.js`,
       `dist/apps/${appName}/styles.css`
     );
@@ -80,7 +79,7 @@ describe('Web Components Applications', () => {
       `generate @nrwl/web:app ${appName} --bundler=webpack --no-interactive --compiler swc`
     );
     runCLI(
-      `generate @nrwl/react:lib ${libName} --bundler=rollup --no-interactive --compiler swc`
+      `generate @nrwl/react:lib ${libName} --bundler=rollup --no-interactive --compiler swc --unitTestRunner=jest`
     );
 
     createFile(`dist/apps/${appName}/_should_remove.txt`);
@@ -111,23 +110,6 @@ describe('Web Components Applications', () => {
     createFile(`dist/libs/${libName}/_should_keep.txt`);
     runCLI(`build ${libName} --delete-output-path=false --outputHashing none`);
     checkFilesExist(`dist/libs/${libName}/_should_keep.txt`);
-  }, 120000);
-
-  it('should do another build if differential loading is needed', async () => {
-    const appName = uniq('app');
-
-    runCLI(
-      `generate @nrwl/web:app ${appName} --bundler=webpack --no-interactive`
-    );
-
-    updateFile(`apps/${appName}/browserslist`, `IE 9-11`);
-
-    runCLI(`build ${appName} --outputHashing=none`);
-
-    checkFilesExist(
-      `dist/apps/${appName}/main.js`,
-      `dist/apps/${appName}/main.es5.js`
-    );
   }, 120000);
 
   it('should emit decorator metadata when it is enabled in tsconfig', async () => {

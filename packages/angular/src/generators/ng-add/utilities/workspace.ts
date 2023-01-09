@@ -4,10 +4,10 @@ import {
   getProjects,
   joinPathFragments,
   readJson,
-  readWorkspaceConfiguration,
+  readNxJson,
   updateJson,
+  updateNxJson,
   updateProjectConfiguration,
-  updateWorkspaceConfiguration,
   writeJson,
 } from '@nrwl/devkit';
 import { Linter, lintInitGenerator } from '@nrwl/linter';
@@ -23,7 +23,6 @@ import { angularDevkitVersion, nxVersion } from '../../../utils/versions';
 import type { ProjectMigrator } from '../migrators';
 import type { GeneratorOptions } from '../schema';
 import type { WorkspaceRootFileTypesInfo } from './types';
-import { workspaceMigrationErrorHeading } from './validation-logging';
 
 export function validateWorkspace(tree: Tree): void {
   const errors: string[] = [];
@@ -38,12 +37,16 @@ export function validateWorkspace(tree: Tree): void {
     return;
   }
 
-  throw new Error(`${workspaceMigrationErrorHeading}
+  throw new Error(`The workspace cannot be migrated because of the following issues:
 
   - ${errors.join('\n  ')}`);
 }
 
-export function createNxJson(tree: Tree, options: GeneratorOptions): void {
+export function createNxJson(
+  tree: Tree,
+  options: GeneratorOptions,
+  defaultProject: string | undefined
+): void {
   const { npmScope } = options;
 
   const targets = getWorkspaceCommonTargets(tree);
@@ -102,6 +105,7 @@ export function createNxJson(tree: Tree, options: GeneratorOptions): void {
           }
         : undefined,
     },
+    defaultProject,
   });
 }
 
@@ -164,12 +168,12 @@ export function decorateAngularCli(tree: Tree): void {
 }
 
 export function updateWorkspaceConfigDefaults(tree: Tree): void {
-  const workspaceConfig = readWorkspaceConfiguration(tree);
-  delete (workspaceConfig as any).newProjectRoot;
-  if (workspaceConfig.cli) {
-    delete (workspaceConfig as any).defaultCollection;
+  const nxJson = readNxJson(tree);
+  delete (nxJson as any).newProjectRoot;
+  if (nxJson.cli) {
+    delete (nxJson as any).defaultCollection;
   }
-  updateWorkspaceConfiguration(tree, workspaceConfig);
+  updateNxJson(tree, nxJson);
 }
 
 export function updateRootTsConfig(tree: Tree): void {

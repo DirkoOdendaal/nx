@@ -35,19 +35,19 @@ import {
   ProjectConfiguration,
   ProjectsConfigurations,
 } from '../config/workspace-json-project-json';
-import {
-  readAllWorkspaceConfiguration,
-  readNxJson,
-} from '../config/configuration';
+import { readNxJson } from '../config/configuration';
 import {
   lockFileExists,
   lockFileHash,
   mapLockFileDataToPartialGraph,
   parseLockFile,
 } from '../lock-file/lock-file';
+import { Workspaces } from '../config/workspaces';
 
 export async function buildProjectGraph() {
-  const projectConfigurations = readAllWorkspaceConfiguration();
+  const projectConfigurations = new Workspaces(
+    workspaceRoot
+  ).readProjectsConfig();
   const { projectFileMap, allWorkspaceFiles } = createProjectFileMap(
     projectConfigurations,
     defaultFileHasher.allFileData()
@@ -414,14 +414,15 @@ function createContext(
   fileMap: ProjectFileMap,
   filesToProcess: ProjectFileMap
 ): ProjectGraphProcessorContext {
-  const projects: Record<string, ProjectConfiguration> = Object.keys(
-    projectsConfigurations.projects
-  ).reduce((map, projectName) => {
-    map[projectName] = {
-      ...projectsConfigurations.projects[projectName],
-    };
-    return map;
-  }, {});
+  const projects = Object.keys(projectsConfigurations.projects).reduce(
+    (map, projectName) => {
+      map[projectName] = {
+        ...projectsConfigurations.projects[projectName],
+      };
+      return map;
+    },
+    {} as Record<string, ProjectConfiguration>
+  );
   return {
     workspace: {
       ...projectsConfigurations,

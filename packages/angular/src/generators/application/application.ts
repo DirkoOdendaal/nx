@@ -2,7 +2,9 @@ import {
   formatFiles,
   installPackagesTask,
   moveFilesToNewDirectory,
+  readNxJson,
   Tree,
+  updateNxJson,
 } from '@nrwl/devkit';
 import { wrapAngularDevkitSchematic } from '@nrwl/devkit/ngcli-adapter';
 import { convertToNxProjectGenerator } from '@nrwl/workspace/generators';
@@ -20,7 +22,6 @@ import {
   enableStrictTypeChecking,
   normalizeOptions,
   setApplicationStrictDefault,
-  setDefaultProject,
   updateAppComponentTemplate,
   updateComponentSpec,
   updateConfigFiles,
@@ -123,8 +124,10 @@ export async function applicationGenerator(
   await addE2e(tree, options);
   updateEditorTsConfig(tree, options);
 
-  if (!options.skipDefaultProject) {
-    setDefaultProject(tree, options);
+  if (options.rootProject) {
+    const nxJson = readNxJson(tree);
+    nxJson.defaultProject = options.name;
+    updateNxJson(tree, nxJson);
   }
 
   if (options.backendProject) {

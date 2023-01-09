@@ -12,6 +12,7 @@ import { workspaceRoot } from '../utils/workspace-root';
 import { splitTarget } from '../utils/split-target';
 import { output } from '../utils/output';
 import {
+  ProjectConfiguration,
   ProjectsConfigurations,
   TargetDependencyConfig,
 } from '../config/workspace-json-project-json';
@@ -35,16 +36,13 @@ export async function runOne(
   const nxJson = readNxJson();
   const projectGraph = await createProjectGraphAsync({ exitOnError: true });
 
-  const opts = parseRunOneOptions(cwd, args, {
-    ...readProjectsConfigurationFromProjectGraph(projectGraph),
-    ...nxJson,
-  });
+  const opts = parseRunOneOptions(cwd, args, projectGraph, nxJson);
 
   const { nxArgs, overrides } = splitArgsIntoNxArgsAndOverrides(
     {
       ...opts.parsedArgs,
       configuration: opts.configuration,
-      target: opts.target,
+      targets: [opts.target],
     },
     'run-one',
     { printWarnings: true },
@@ -102,12 +100,14 @@ const targetAliases = {
 function parseRunOneOptions(
   cwd: string,
   parsedArgs: { [k: string]: any },
-  workspaceConfiguration: ProjectsConfigurations & NxJsonConfiguration
+  projectGraph: ProjectGraph,
+  nxJson: NxJsonConfiguration
 ): { project; target; configuration; parsedArgs } {
   const defaultProjectName = calculateDefaultProjectName(
     cwd,
     workspaceRoot,
-    workspaceConfiguration
+    readProjectsConfigurationFromProjectGraph(projectGraph),
+    nxJson
   );
 
   let project;
@@ -117,7 +117,8 @@ function parseRunOneOptions(
   if (parsedArgs['project:target:configuration'].indexOf(':') > -1) {
     // run case
     [project, target, configuration] = splitTarget(
-      parsedArgs['project:target:configuration']
+      parsedArgs['project:target:configuration'],
+      projectGraph
     );
     // this is to account for "nx npmsript:dev"
     if (project && !target && defaultProjectName) {
@@ -158,16 +159,17 @@ function parseRunOneOptions(
 export function calculateDefaultProjectName(
   cwd: string,
   root: string,
-  workspaceConfiguration: ProjectsConfigurations & NxJsonConfiguration
+  projectsConfigurations: ProjectsConfigurations,
+  nxJsonConfiguration: NxJsonConfiguration
 ) {
   let relativeCwd = cwd.replace(/\\/g, '/').split(root.replace(/\\/g, '/'))[1];
 
   relativeCwd = relativeCwd.startsWith('/')
     ? relativeCwd.substring(1)
     : relativeCwd;
-  const matchingProject = Object.keys(workspaceConfiguration.projects).find(
+  const matchingProject = Object.keys(projectsConfigurations.projects).find(
     (p) => {
-      const projectRoot = workspaceConfiguration.projects[p].root;
+      const projectRoot = projectsConfigurations.projects[p].root;
       return (
         relativeCwd == projectRoot ||
         (relativeCwd == '' && projectRoot == '.') ||
@@ -177,7 +179,7 @@ export function calculateDefaultProjectName(
   );
   if (matchingProject) return matchingProject;
   return (
-    (workspaceConfiguration.cli as { defaultProjectName: string })
-      ?.defaultProjectName || workspaceConfiguration.defaultProject
+    (nxJsonConfiguration.cli as { defaultProjectName: string })
+      ?.defaultProjectName || nxJsonConfiguration.defaultProject
   );
 }

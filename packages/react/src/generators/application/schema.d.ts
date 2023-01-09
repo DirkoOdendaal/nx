@@ -27,7 +27,6 @@ export interface Schema {
   compiler?: 'babel' | 'swc';
   remotes?: string[];
   devServerPort?: number;
-  skipDefaultProject?: boolean;
   skipPackageJson?: boolean;
   rootProject?: boolean;
   bundler?: 'webpack' | 'vite';
@@ -44,5 +43,5 @@ export interface NormalizedSchema<T extends Schema = Schema> extends T {
   styledModule: null | SupportedStyles;
   hasStyles: boolean;
   unitTestRunner: 'jest' | 'vitest' | 'none';
-  includeNxStarterTemplate: boolean;
+  skipStarterTemplate: boolean;
 }

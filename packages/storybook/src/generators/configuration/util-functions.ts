@@ -1,18 +1,18 @@
 import {
+  createProjectGraphAsync,
   generateFiles,
-  getProjects,
   joinPathFragments,
   logger,
   offsetFromRoot,
   parseTargetString,
   readJson,
+  readNxJson,
   readProjectConfiguration,
-  readWorkspaceConfiguration,
   toJS,
   Tree,
   updateJson,
+  updateNxJson,
   updateProjectConfiguration,
-  updateWorkspaceConfiguration,
   workspaceRoot,
   writeJson,
 } from '@nrwl/devkit';
@@ -298,32 +298,29 @@ export function createRootStorybookDir(
     tmpl: '',
   });
 
-  const workspaceConfiguration = readWorkspaceConfiguration(tree);
+  const nxJson = readNxJson(tree);
 
-  if (workspaceConfiguration.namedInputs) {
-    const hasProductionFileset =
-      !!workspaceConfiguration.namedInputs?.production;
+  if (nxJson.namedInputs) {
+    const hasProductionFileset = !!nxJson.namedInputs?.production;
     if (hasProductionFileset) {
-      workspaceConfiguration.namedInputs.production.push(
-        '!{projectRoot}/.storybook/**/*'
-      );
-      workspaceConfiguration.namedInputs.production.push(
+      nxJson.namedInputs.production.push('!{projectRoot}/.storybook/**/*');
+      nxJson.namedInputs.production.push(
         '!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)'
       );
     }
 
-    workspaceConfiguration.targetDefaults ??= {};
-    workspaceConfiguration.targetDefaults['build-storybook'] ??= {};
-    workspaceConfiguration.targetDefaults['build-storybook'].inputs ??= [
+    nxJson.targetDefaults ??= {};
+    nxJson.targetDefaults['build-storybook'] ??= {};
+    nxJson.targetDefaults['build-storybook'].inputs ??= [
       'default',
       hasProductionFileset ? '^production' : '^default',
     ];
 
-    workspaceConfiguration.targetDefaults['build-storybook'].inputs.push(
+    nxJson.targetDefaults['build-storybook'].inputs.push(
       '{workspaceRoot}/.storybook/**/*'
     );
 
-    updateWorkspaceConfiguration(tree, workspaceConfiguration);
+    updateNxJson(tree, nxJson);
   }
 
   if (js) {
@@ -537,11 +534,12 @@ export function rootFileIsTs(
   }
 }
 
-export function getE2EProjectName(
+export async function getE2EProjectName(
   tree: Tree,
   mainProject: string
-): string | undefined {
+): Promise<string | undefined> {
   let e2eProject: string;
+  const graph = await createProjectGraphAsync();
   forEachExecutorOptions(
     tree,
     '@nrwl/cypress:cypress',
@@ -551,7 +549,8 @@ export function getE2EProjectName(
       }
       if (options['devServerTarget']) {
         const { project, target } = parseTargetString(
-          options['devServerTarget']
+          options['devServerTarget'],
+          graph
         );
         if (
           (project === mainProject && target === 'serve') ||

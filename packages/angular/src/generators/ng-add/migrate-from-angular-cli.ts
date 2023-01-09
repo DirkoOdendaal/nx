@@ -29,7 +29,6 @@ import {
   updateRootTsConfig,
   updateVsCodeRecommendedExtensions,
   updateWorkspaceConfigDefaults,
-  validateProjects,
   validateWorkspace,
 } from './utilities';
 
@@ -41,6 +40,8 @@ export async function migrateFromAngularCli(
   const projects = getAllProjects(tree);
   const options = normalizeOptions(tree, rawOptions, projects);
 
+  const angularJson = readJson(tree, 'angular.json') as any;
+
   if (options.preserveAngularCliLayout) {
     addDependenciesToPackageJson(
       tree,
@@ -51,7 +52,7 @@ export async function migrateFromAngularCli(
         prettier: prettierVersion,
       }
     );
-    createNxJson(tree, options);
+    createNxJson(tree, options, angularJson.defaultProject);
     decorateAngularCli(tree);
     updateVsCodeRecommendedExtensions(tree);
     await updatePrettierConfig(tree);
@@ -68,9 +69,6 @@ export async function migrateFromAngularCli(
       ...projects.apps.map((app) => new AppMigrator(tree, options, app)),
       ...projects.libs.map((lib) => new LibMigrator(tree, options, lib)),
     ];
-
-    // validate all projects
-    validateProjects(migrators);
 
     const workspaceRootFileTypesInfo = getWorkspaceRootFileTypesInfo(
       tree,
@@ -94,7 +92,7 @@ export async function migrateFromAngularCli(
       version: 2,
       $schema: undefined,
     }));
-    createNxJson(tree, options);
+    createNxJson(tree, options, angularJson.defaultProject);
     updateWorkspaceConfigDefaults(tree);
     updateRootTsConfig(tree);
     updatePackageJson(tree);

@@ -1,4 +1,4 @@
-import TaskList from './task-list';
+import { TaskList } from './task-list';
 import {
   useNavigate,
   useParams,
@@ -12,11 +12,12 @@ import type {
 } from 'nx/src/command-line/dep-graph';
 import { getGraphService } from '../machines/graph.service';
 import { useEffect, useState } from 'react';
-import CheckboxPanel from '../ui-components/checkbox-panel';
+import { CheckboxPanel } from '../ui-components/checkbox-panel';
 
-// nx-ignore-next-line
-import Dropdown from '../ui-components/dropdown';
-import ShowHideAll from '../ui-components/show-hide-all';
+import { Dropdown } from '@nrwl/graph/ui-components';
+import { ShowHideAll } from '../ui-components/show-hide-all';
+import { useCurrentPath } from '../hooks/use-current-path';
+import { useRouteConstructor } from '../util';
 
 function createTaskName(
   project: string,
@@ -52,15 +53,24 @@ export function TasksSidebar() {
 
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
+  const currentRoute = useCurrentPath();
+  const routeContructor = useRouteConstructor();
+
   function selectTarget(target: string) {
     if (target === selectedTarget) return;
 
     hideAllProjects();
 
     if (params['selectedTarget']) {
-      navigate({ pathname: `../${target}`, search: searchParams.toString() });
+      navigate({
+        pathname: `../${encodeURIComponent(target)}`,
+        search: searchParams.toString(),
+      });
     } else {
-      navigate({ pathname: `${target}`, search: searchParams.toString() });
+      navigate({
+        pathname: `${encodeURIComponent(target)}`,
+        search: searchParams.toString(),
+      });
     }
   }
 
@@ -84,20 +94,9 @@ export function TasksSidebar() {
   }
 
   function selectAllProjects() {
-    const allProjectsWithSelectedTarget = projects.filter((project) =>
-      project.data.targets.hasOwnProperty(selectedTarget)
+    navigate(
+      routeContructor(`/tasks/${encodeURIComponent(selectedTarget)}/all`, true)
     );
-
-    setSelectedProjects(
-      allProjectsWithSelectedTarget.map((project) => project.name)
-    );
-
-    graphService.handleTaskEvent({
-      type: 'notifyTaskGraphTasksSelected',
-      taskIds: allProjectsWithSelectedTarget.map(
-        (project) => `${project.name}:${selectedTarget}`
-      ),
-    });
   }
 
   function hideAllProjects() {
@@ -111,6 +110,10 @@ export function TasksSidebar() {
       type: 'notifyTaskGraphTasksDeselected',
       taskIds: allProjects,
     });
+
+    navigate(
+      routeContructor(`/tasks/${encodeURIComponent(selectedTarget)}`, true)
+    );
   }
 
   function deselectProject(project: string) {
@@ -125,6 +128,10 @@ export function TasksSidebar() {
       type: 'notifyTaskGraphTasksDeselected',
       taskIds: [taskId],
     });
+
+    navigate(
+      routeContructor(`/tasks/${encodeURIComponent(selectedTarget)}`, true)
+    );
   }
 
   useEffect(() => {
@@ -149,6 +156,27 @@ export function TasksSidebar() {
       });
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    switch (currentRoute.currentPath) {
+      case `/tasks/${selectedTarget}/all`:
+        const allProjectsWithSelectedTarget = projects.filter((project) =>
+          project.data.targets.hasOwnProperty(selectedTarget)
+        );
+
+        setSelectedProjects(
+          allProjectsWithSelectedTarget.map((project) => project.name)
+        );
+
+        graphService.handleTaskEvent({
+          type: 'notifyTaskGraphTasksSelected',
+          taskIds: allProjectsWithSelectedTarget.map(
+            (project) => `${project.name}:${selectedTarget}`
+          ),
+        });
+        break;
+    }
+  }, [currentRoute]);
 
   function groupByProjectChanged(checked) {
     setSearchParams(
@@ -211,5 +239,3 @@ export function TasksSidebar() {
     </>
   );
 }
-
-export default TasksSidebar;

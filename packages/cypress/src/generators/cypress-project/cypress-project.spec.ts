@@ -189,6 +189,22 @@ describe('Cypress Project', () => {
       expect(tsConfig.extends).toBe('../../tsconfig.json');
     });
 
+    describe('for bundler:vite', () => {
+      it('should pass the bundler info to nxE2EPreset in `cypress.config.ts`', async () => {
+        await cypressProjectGenerator(tree, {
+          ...defaultOptions,
+          name: 'my-app-e2e',
+          project: 'my-app',
+          bundler: 'vite',
+        });
+        const cypressConfig = tree.read(
+          'apps/my-app-e2e/cypress.config.ts',
+          'utf-8'
+        );
+        expect(cypressConfig).toMatchSnapshot();
+      });
+    });
+
     describe('nested', () => {
       it('should set right path names in `cypress.config.ts`', async () => {
         await cypressProjectGenerator(tree, {
@@ -267,6 +283,32 @@ describe('Cypress Project', () => {
               'e2e-tests/src/support/commands.ts',
               'e2e-tests/src/support/e2e.ts',
               'e2e-tests/tsconfig.json',
+            ])
+          );
+        });
+
+        it('should not generate a root project when the passed in project is not the root project', async () => {
+          addProjectConfiguration(tree, 'root', {
+            root: '.',
+          });
+          addProjectConfiguration(tree, 'my-cool-app', {
+            root: 'apps/my-app',
+          });
+          await cypressProjectGenerator(tree, {
+            ...defaultOptions,
+            name: 'e2e-tests',
+            baseUrl: 'http://localhost:1234',
+            project: 'my-app',
+          });
+          expect(tree.listChanges().map((c) => c.path)).toEqual(
+            expect.arrayContaining([
+              'apps/e2e-tests/cypress.config.ts',
+              'apps/e2e-tests/src/e2e/app.cy.ts',
+              'apps/e2e-tests/src/fixtures/example.json',
+              'apps/e2e-tests/src/support/app.po.ts',
+              'apps/e2e-tests/src/support/commands.ts',
+              'apps/e2e-tests/src/support/e2e.ts',
+              'apps/e2e-tests/tsconfig.json',
             ])
           );
         });

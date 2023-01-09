@@ -60,7 +60,6 @@ export { Workspaces } from 'nx/src/config/workspaces';
 
 // TODO (v16): Change this to export from 'nx/src/config/configuration'
 export {
-  readNxJson,
   readAllWorkspaceConfiguration,
   workspaceLayout,
 } from 'nx/src/project-graph/file-utils';
@@ -145,6 +144,8 @@ export {
   updateWorkspaceConfiguration,
   getProjects,
   isStandaloneProject,
+  readNxJson,
+  updateNxJson,
 } from 'nx/src/generators/utils/project-configuration';
 
 /**
@@ -162,9 +163,6 @@ export { updateTsConfigsToJs } from './src/generators/update-ts-configs-to-js';
  */
 export { visitNotIgnoredFiles } from './src/generators/visit-not-ignored-files';
 
-/**
- * @category Executors
- */
 export {
   parseTargetString,
   targetToTargetString,
@@ -366,4 +364,5 @@ export { cacheDir } from 'nx/src/utils/cache-directory';
 /**
  * @category Package Manager
  */
-export { pruneLockFile } from 'nx/src/lock-file/lock-file';
+export { createLockFile } from 'nx/src/lock-file/lock-file';
+export { createPackageJson } from 'nx/src/utils/create-package-json';

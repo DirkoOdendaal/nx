@@ -7,7 +7,7 @@ import { workspaceRoot } from '../utils/workspace-root';
 import { LockFileData, PackageDependency } from './utils/lock-file-type';
 import { TransitiveLookupFunctionInput } from './utils/mapping';
 import { hashString, generatePrunnedHash } from './utils/hashing';
-import { PackageJsonDeps } from './utils/pruning';
+import type { PackageJsonDeps } from './utils/pruning';
 
 type PackageMeta = {
   path: string;
@@ -114,13 +114,21 @@ function mapPackages(
         if (lockfileVersion === 2) {
           const path = packagePath.split(/\/?node_modules\//).slice(1);
 
-          path.forEach((proj) => {
-            if (!dependency) {
-              dependency = dependencies[proj];
+          let index = 1;
+          dependency = dependencies[path[0]];
+          while (index < path.length) {
+            // the root lockfile might not match the nested project's lockfile
+            // given path might not exist in the root lockfile
+            if (
+              dependency?.dependencies &&
+              dependency.dependencies[path[index]]
+            ) {
+              dependency = dependency.dependencies[path[index]];
+              index++;
             } else {
-              dependency = dependency.dependencies[proj];
+              break;
             }
-          });
+          }
           // if versions are same, no need to track it further
           if (dependency && value.version === dependency.version) {
             dependency = undefined;
@@ -197,10 +205,11 @@ function mapPackageDependency(
 
     mappedPackages[packageName][key] = {
       ...(value as Omit<PackageDependency, 'packageMeta'>),
-      ...(!value.integrity && {
-        actualVersion: value.version,
-        version: value.resolved,
-      }),
+      ...(!value.integrity &&
+        value.version && {
+          actualVersion: value.version,
+          version: value.resolved,
+        }),
       ...(value.integrity &&
         dependencyValue && {
           actualVersion: value.version,
@@ -790,6 +799,8 @@ function setPackageMetaModifiers(
 
   if (parent.devDependencies?.[packageName]) {
     packageMeta.dev = true;
+  } else if (dependency.optional) {
+    packageMeta.optional = true;
   } else if (parent.optionalDependencies?.[packageName]) {
     packageMeta.optional = true;
   } else if (parent.peerDependencies?.[packageName]) {

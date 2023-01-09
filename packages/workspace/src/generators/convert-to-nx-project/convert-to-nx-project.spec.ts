@@ -1,20 +1,17 @@
+import * as devkit from '@nrwl/devkit';
 import {
   ProjectConfiguration,
   readJson,
   readProjectConfiguration,
 } from '@nrwl/devkit';
-import {
-  createTreeWithEmptyV1Workspace,
-  createTreeWithEmptyWorkspace,
-} from '@nrwl/devkit/testing';
-import enquirer = require('enquirer');
+import { createTreeWithEmptyV1Workspace } from '@nrwl/devkit/testing';
+import { getRelativeProjectJsonSchemaPath } from 'nx/src/generators/utils/project-configuration';
 import { libraryGenerator } from '../library/library';
-import * as devkit from '@nrwl/devkit';
-
 import convertToNxProject, {
   SCHEMA_OPTIONS_ARE_MUTUALLY_EXCLUSIVE,
 } from './convert-to-nx-project';
 import { getProjectConfigurationPath } from './utils/get-project-configuration-path';
+import enquirer = require('enquirer');
 
 jest.mock('fs-extra', () => ({
   ...jest.requireActual<any>('fs-extra'),
@@ -88,7 +85,11 @@ describe('convert-to-nx-project', () => {
       getProjectConfigurationPath(config)
     );
 
+    expect(newConfigFile.$schema).toBe(
+      getRelativeProjectJsonSchemaPath(tree, config)
+    );
     delete config.root;
+    delete newConfigFile.$schema;
     expect(config).toEqual(newConfigFile);
   });
 
@@ -116,7 +117,11 @@ describe('convert-to-nx-project', () => {
         tree,
         getProjectConfigurationPath(config)
       );
+      expect(newConfigFile.$schema).toBe(
+        getRelativeProjectJsonSchemaPath(tree, config)
+      );
       delete config.root;
+      delete newConfigFile.$schema;
       expect(config).toEqual(newConfigFile);
     }
   });
@@ -152,20 +157,6 @@ describe('convert-to-nx-project', () => {
     await convertToNxProject(tree, { project: 'lib' });
     const json = readJson(tree, 'workspace.json');
     expect(json.projects.lib).toEqual(config.root);
-  });
-
-  it('should error in v1 schema with workspace.json', async () => {
-    const tree = createTreeWithEmptyV1Workspace();
-    await libraryGenerator(tree, {
-      name: 'lib',
-      standaloneConfig: false,
-    });
-    try {
-      await convertToNxProject(tree, { project: 'lib' });
-    } catch (ex) {
-      expect(ex).toBeDefined();
-    }
-    expect.assertions(1);
   });
 
   it('should format files by default', async () => {

@@ -26,7 +26,7 @@ export async function* devServerExecutor(
   context: ExecutorContext
 ) {
   const { root: projectRoot, sourceRoot } =
-    context.workspace.projects[context.projectName];
+    context.projectsConfigurations.projects[context.projectName];
   const buildOptions = normalizeOptions(
     getBuildOptions(serveOptions, context),
     context.root,
@@ -93,14 +93,11 @@ function getBuildOptions(
   options: WebDevServerOptions,
   context: ExecutorContext
 ): WebpackExecutorOptions {
-  const target = parseTargetString(options.buildTarget);
+  const target = parseTargetString(options.buildTarget, context.projectGraph);
 
   const overrides: Partial<WebpackExecutorOptions> = {
     watch: false,
   };
-  if (options.maxWorkers) {
-    overrides.maxWorkers = options.maxWorkers;
-  }
   if (options.memoryLimit) {
     overrides.memoryLimit = options.memoryLimit;
   }

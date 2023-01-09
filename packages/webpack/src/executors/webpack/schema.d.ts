@@ -41,14 +41,12 @@ export interface WebpackExecutorOptions {
   additionalEntryPoints?: AdditionalEntryPoint[];
   assets?: Array<AssetGlob | string>;
   baseHref?: string;
-  budgets?: any[];
   buildLibsFromSource?: boolean;
   commonChunk?: boolean;
   compiler?: 'babel' | 'swc' | 'tsc';
   crossOrigin?: CrossOriginValue;
   deleteOutputPath?: boolean;
   deployUrl?: string;
-  es2015Polyfills?: string;
   externalDependencies?: 'all' | 'none' | string[];
   extractCss?: boolean;
   extractLicenses?: boolean;
@@ -57,7 +55,6 @@ export interface WebpackExecutorOptions {
   generatePackageJson?: boolean;
   index?: string;
   main: string;
-  maxWorkers?: number;
   memoryLimit?: number;
   namedChunks?: boolean;
   optimization?: boolean | OptimizationOptions;
